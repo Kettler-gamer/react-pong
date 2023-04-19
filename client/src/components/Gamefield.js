@@ -4,6 +4,7 @@ import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
 export default function Gamefield() {
   const ref = useRef(false);
   const [showGameOver, setShowGameOver] = useState(false);
+  const [dc, setDc] = useState(false);
   const ctx = useRef(false);
   const gameOver = useRef(false);
   const socket = useRef();
@@ -60,6 +61,7 @@ export default function Gamefield() {
 
     if (ball.x < 10 || ball.x > mapSize.width - 10) {
       gameOver.current = true;
+      setShowGameOver(true);
     }
   }
 
@@ -73,7 +75,7 @@ export default function Gamefield() {
   }
 
   function renderGamefield() {
-    if (gameOver.current) return setShowGameOver(true);
+    if (gameOver.current) return;
     applyMotion();
     ctx.current.clearRect(0, 0, mapSize.width, mapSize.height);
 
@@ -85,23 +87,13 @@ export default function Gamefield() {
   }
 
   const keyPressed = {};
+  let player = "player1";
 
   function keyHandler(key) {
     switch (key) {
-      case "w":
-      case "s":
-        player1.yMove =
-          keyPressed["w"] && keyPressed["s"]
-            ? 0
-            : keyPressed["w"]
-            ? -1
-            : keyPressed["s"]
-            ? 1
-            : 0;
-        break;
       case "ArrowUp":
       case "ArrowDown":
-        player2.yMove =
+        const value =
           keyPressed["ArrowUp"] && keyPressed["ArrowDown"]
             ? 0
             : keyPressed["ArrowUp"]
@@ -109,6 +101,12 @@ export default function Gamefield() {
             : keyPressed["ArrowDown"]
             ? 1
             : 0;
+        if (player === "player1") {
+          player1.yMove = value;
+        } else {
+          player2.yMove = value;
+        }
+        socket.current.emit("move", { move: value, ball });
         break;
       default:
     }
@@ -125,17 +123,41 @@ export default function Gamefield() {
     keyHandler(event.key);
   }
 
+  function onStartGame(playerName) {
+    player = playerName;
+    renderGamefield();
+  }
+
+  function opponentMove(value) {
+    if (player === "player1") {
+      player2.yMove = value.move;
+    } else {
+      player1.yMove = value.move;
+    }
+    for (let index in value.ball) {
+      ball[index] = value.ball[index];
+    }
+  }
+
+  function onDisconnected() {
+    socket.current.close();
+    gameOver.current = true;
+    setDc(true);
+  }
+
   useEffect(() => {
     if (!ref.current) {
       ref.current = true;
       window.addEventListener("keyup", onKeyUp);
       window.addEventListener("keydown", keyDown);
       ctx.current = document.querySelector("canvas").getContext("2d");
-      // renderGamefield();
       const sock = io("http://localhost:3001/");
-      sock.on("connection", () => {
+      sock.on("connect", () => {
         console.log("Connected!");
       });
+      sock.on("disconnect", onDisconnected);
+      sock.on("start", onStartGame);
+      sock.on("opponentMove", opponentMove);
       socket.current = sock;
     }
   });
@@ -144,6 +166,7 @@ export default function Gamefield() {
     <>
       <canvas width={mapSize.width} height={mapSize.height}></canvas>
       {showGameOver && <h2>Game Over!</h2>}
+      {dc && <p>Disconnected. Refresh to try again!</p>}
     </>
   );
 }

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
 
 export default function Gamefield() {
   const ref = useRef(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const ctx = useRef(false);
   const gameOver = useRef(false);
+  const socket = useRef();
   const mapSize = { width: 1024, height: 496 };
 
   const playerSpeed = 5;
@@ -129,7 +131,12 @@ export default function Gamefield() {
       window.addEventListener("keyup", onKeyUp);
       window.addEventListener("keydown", keyDown);
       ctx.current = document.querySelector("canvas").getContext("2d");
-      renderGamefield();
+      // renderGamefield();
+      const sock = io("http://localhost:3001/");
+      sock.on("connection", () => {
+        console.log("Connected!");
+      });
+      socket.current = sock;
     }
   });
 

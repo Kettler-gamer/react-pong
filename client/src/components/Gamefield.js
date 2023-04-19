@@ -37,9 +37,23 @@ export default function Gamefield() {
     yMove: 0,
   };
 
+  function checkPlayerYAxis() {
+    if (player1.y < 0) {
+      player1.y = 0;
+    } else if (player1.y > mapSize.height - 50) {
+      player1.y = mapSize.height - 50;
+    }
+    if (player2.y < 0) {
+      player2.y = 0;
+    } else if (player2.y > mapSize.height - 50) {
+      player2.y = mapSize.height - 50;
+    }
+  }
+
   function applyMotion() {
     player1.y += player1.yMove * playerSpeed;
     player2.y += player2.yMove * playerSpeed;
+    checkPlayerYAxis();
     ball.x += ball.xMove * ballSpeed;
     ball.y += ball.yMove * ballSpeed;
 

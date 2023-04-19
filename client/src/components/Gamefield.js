@@ -82,7 +82,6 @@ export default function Gamefield() {
   function onPlayerHitBall(playerY) {
     ball.xMove = -ball.xMove;
 
-    console.log(-(playerY + 30 - ball.y) * 0.01);
     ball.yMove = -(playerY + 30 - ball.y) * 0.01;
 
     ballSpeed = Math.min(ballSpeed + 1, maxBallSpeed);

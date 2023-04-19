@@ -115,12 +115,15 @@ export default function Gamefield() {
             : keyPressed["ArrowDown"]
             ? 1
             : 0;
+        let moverToSend;
         if (player === "player1") {
           player1.yMove = value;
+          moverToSend = player1;
         } else {
           player2.yMove = value;
+          moverToSend = player2;
         }
-        socket.current.emit("move", { move: value, ball });
+        socket.current.emit("move", { move: moverToSend, ball });
         break;
       default:
     }
@@ -143,11 +146,12 @@ export default function Gamefield() {
   }
 
   function opponentMove(value) {
-    if (player === "player1") {
-      player2.yMove = value.move;
-    } else {
-      player1.yMove = value.move;
+    const opponent = player === "player1" ? player2 : player1;
+
+    for (let index in value.move) {
+      opponent[index] = value.move[index];
     }
+
     for (let index in value.ball) {
       ball[index] = value.ball[index];
     }
